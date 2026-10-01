@@ -7,6 +7,11 @@ jobs:
   build-test-release-apk:
     runs-on: ubuntu-latest
 
+    env:
+      NOTEPAD_STORE_PASSWORD: android
+      NOTEPAD_KEY_ALIAS: testkey
+      NOTEPAD_KEY_PASSWORD: android
+
     steps:
       - uses: actions/checkout@v7
 
@@ -25,22 +30,17 @@ jobs:
       - name: Generate temporary test keystore
         run: |
           keytool -genkeypair -v \
-            -keystore "$RUNNER_TEMP/test-release.keystore" \
-            -alias testkey \
+            -keystore app/keystore.jks \
+            -alias "$NOTEPAD_KEY_ALIAS" \
             -keyalg RSA \
             -keysize 2048 \
             -validity 10 \
-            -storepass android \
-            -keypass android \
+            -storepass "$NOTEPAD_STORE_PASSWORD" \
+            -keypass "$NOTEPAD_KEY_PASSWORD" \
             -dname "CN=DevTest, OU=DevStep, O=DevStep, L=City, ST=State, C=US"
 
       - name: Build signed release APK
-        run: |
-          ./gradlew assembleRelease --stacktrace \
-            -Pandroid.injected.signing.store.file="$RUNNER_TEMP/test-release.keystore" \
-            -Pandroid.injected.signing.store.password=android \
-            -Pandroid.injected.signing.key.alias=testkey \
-            -Pandroid.injected.signing.key.password=android
+        run: ./gradlew assembleRelease --stacktrace
 
       - uses: actions/upload-artifact@v7
         with:
